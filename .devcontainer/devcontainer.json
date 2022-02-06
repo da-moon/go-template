@@ -1,11 +1,8 @@
 {
-  "dockerComposeFile": [
-    "docker-compose.yml"
-  ],
-  "service": "workspace",
-  "shutdownAction": "stopCompose",
-  "workspaceFolder": "/workspace",
+  "name": "go-template",
+  "image": "fjolsvin/golang-alpine-sandbox",
   "settings": {
+    "workspaceFolder": "/workspace",
     "files.eol": "\n",
     "files.exclude": {
       "**/.vagrant": true,
@@ -65,31 +62,27 @@
     ]
   },
   "extensions": [
-	"redhat.vscode-yaml",
-	"streetsidesoftware.code-spell-checker",
-	"wayou.vscode-todo-highlight",
-	"yzhang.markdown-all-in-one",
-	"aaron-bond.better-comments",
-	"golang.Go",
-	"mutantdino.resourcemonitor",
-	"TabNine.tabnine-vscode",
-	"EditorConfig.EditorConfig",
-	"kevinkyang.auto-comment-blocks",
-	"ms-azuretools.vscode-docker",
-	"karyfoundation.comment",
-	"wmaurer.change-case",
-	"skellock.just",
-	"wholroyd.hcl",
-	"znck.grammarly",
-	"tabnine.tabnine-vscode",
-	"github.copilot",
-	"dracula-theme.theme-dracula",
-	"github.github-vscode-theme"
-],
+    "golang.Go",
+    "bungcip.better-toml",
+    "mutantdino.resourcemonitor",
+    "EditorConfig.EditorConfig",
+    "kevinkyang.auto-comment-blocks",
+    "ms-azuretools.vscode-docker",
+    "karyfoundation.comment",
+    "wmaurer.change-case",
+    "skellock.just",
+    "wholroyd.hcl",
+    "gruntfuggly.todo-tree"
+  ],
   "forwardPorts": [],
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
-  "postCreateCommand": "uname -a && go version",
-  "remoteUser": "devel"
+  "runArgs": [
+    "--cap-add","SYS_PTRACE",
+    "--security-opt","seccomp=unconfined",
+    "--name","go-template"
+  ],
+  "remoteUser": "devel",
+  "postCreateCommand": "uname -a && go version"
 }
