@@ -1,0 +1,27 @@
+---
+name: "docker-gitpod"
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    paths:
+      - ".github/workflows/docker-gitpod.yml"
+      - ".gp/*"
+  workflow_dispatch:
+jobs:
+  ubuntu:
+    name: "build and push docker image"
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: "Login to Docker Container Repository"
+        run: echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: "build and push docker image"
+        shell: bash
+        run: >
+          set -ex &&
+          bash .gp/build.sh
