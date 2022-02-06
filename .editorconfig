@@ -1,0 +1,41 @@
+root = true
+indent_style = space
+indent_size = 2
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
+
+[*.go]
+indent_style = space
+indent_size = 4
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
+
+[*.yml]
+indent_style = space
+indent_size = 2
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
+
+[*.md]
+indent_style = space
+indent_size = 2
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
+
+[*.json]
+indent_style = space
+indent_size = 2
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
+
+[*.Dockerfile]
+indent_style = space
+indent_size = 2
+end_of_line = 1f
+insert_final_newline = true
+charset = utf_8
