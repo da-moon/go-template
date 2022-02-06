@@ -56,7 +56,7 @@ some pre-commit hooks
 
 I won't cover NodeJS, Python, Go-Toolchain, and Pre-commit
 setup in this document. I would explain how to install rust-based dependencies.
-Make sure to install `Ripgrep` through your favorite package manager
+ake sure to install `Ripgrep` through your favorite package manager
 
 ### Rust ToolChain
 

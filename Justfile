@@ -7,7 +7,6 @@ set shell := ["/bin/bash", "-o", "pipefail", "-c"]
 
 project_name := `basename $PWD`
 docker_image := `/bin/grep '"image":' .devcontainer/devcontainer.json | /bin/sed -e 's/"image": //g' -e 's/"//g' -e 's/[[:space:],]*//g'`
-
 # ────────────────────────────────────────────────────────────────────
 default:
     @just --choose
@@ -153,7 +152,7 @@ golangci-lint: format-go
 # ─── GIT ────────────────────────────────────────────────────────────────────────
 # Variables
 
-MASTER_BRANCH_NAME := 'tmo/main'
+MASTER_BRANCH_NAME := 'master'
 MAJOR_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --major 2>/dev/null || echo '0.0.1'`
 MINOR_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --minor 2>/dev/null || echo '0.0.1'`
 PATCH_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --patch 2>/dev/null || echo '0.0.1'`
