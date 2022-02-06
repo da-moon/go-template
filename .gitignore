@@ -1,12 +1,46 @@
-.git-credentials
-**/.git-credentials
-.nvimlog
-*~
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-# vendor/
+*
+!*/
+#  ────────────────────────────────────────────────────────────────────
+!/sdk/**/*.go
+!/api/**/*.go
+!/cmd/**/*.go
+!/pkg/**/*.go
+!/lib/**/*.go
+!/internal/**/*.go
+#  ────────────────────────────────────────────────────────────────────
+!/**/.gitkeep
+#  ────────────────────────────────────────────────────────────────────
+!/.vscode/**
+!/.devcontainer/**
+!/.github/**/*.md
+!/.github/**/*.yml
+!/.gp/**
+#  ────────────────────────────────────────────────────────────────────
+!/proto/**
+!/contrib/**
+!/fixtures/**
+!/assets/**
+!/test/**
+!/tools/**
+!/docs/**
+!/examples/**
+#  ────────────────────────────────────────────────────────────────────
+!.editorconfig
+!.gitignore
+!.dockerignore
+!.gitpod.yml
+!.golangci.yml
+!.markdownlintignore
+!.revive.toml
+!.stignore
+!.versionrc
+!LICENSE
+!README.md
+!commitlint.config.js
+!contrib
+!go.mod
+!go.sum
+!tools.go
+!Justfile
+!.pre-commit-config.yaml
+!.go-version
