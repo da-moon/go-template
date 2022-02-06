@@ -98,7 +98,7 @@ func Target() error {
 		banner := figure.NewFigure(bin, "", true)
 		banner.Print()
 		fmt.Println("")
-		versionpkg := fmt.Sprintf("%s/internal/version", packageName)
+		versionpkg := fmt.Sprintf("%s/build/version", packageName)
 		ldflags := make([]string, 0)
 		buildDate := time.Now().Format("01/02/06")
 		ldflags = append(ldflags, []string{
