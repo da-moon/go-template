@@ -19,8 +19,10 @@ require (
 	github.com/kisielk/errcheck v1.6.0
 	github.com/klauspost/asmfmt v1.3.1
 	github.com/koron/iferr v0.0.0-20180615142939-bb332a3b1d91
+	github.com/kr/text v0.2.0
 	github.com/magefile/mage v1.11.0
 	github.com/mitchellh/cli v1.1.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/modern-go/reflect2 v1.0.1
 	github.com/palantir/stacktrace v0.0.0-20161112013806-78658fd2d177
 	github.com/rogpeppe/godef v1.1.2
