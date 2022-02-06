@@ -42,6 +42,8 @@
 !go.mod
 !go.sum
 !tools.go
+!magefile.go
 !Justfile
+!Makefile
 !.pre-commit-config.yaml
 !.go-version
