@@ -1,0 +1,118 @@
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  gocyclo:
+    min-complexity: 12
+  cyclop:
+    max-complexity: 12
+  dupl:
+    threshold: 128
+  funlen:
+    lines: 128
+    statements: 64
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  depguard:
+    list-type: blacklist
+    packages:
+      - github.com/sirupsen/logrus
+  misspell:
+    locale: US
+    ignore-words:
+      - stacktrace
+  lll:
+    line-length: 180
+  goimports:
+    local-prefixes: github.com/da-moon/go-buildutils
+  gocritic:
+    enabled-tags:
+      - performance
+      - style
+      - experimental
+    disabled-checks:
+      - wrapperFunc
+      - commentFormatting
+      - hugeParam
+  nestif:
+    min-complexity: 8
+  unused:
+    check-exported: true
+  gocognit:
+    min-complexity: 16
+  # wrapcheck:
+  #   ignoreSigs:
+  #     - .Errorf(
+  #     - errors.New(
+  #     - errors.Unwrap(
+  #     - .Wrap(
+  #     - .Wrapf(
+  #     - .WithMessage(
+  #     - errors.WrapIfWithDetails
+  #     - errors.WithDetails(
+  #     - errors.WrapWithDetails(
+  #     - errors.WrapIf(
+  #     - errors.NewWithDetails(
+
+linters:
+  disable-all: true
+  fast: true
+  enable:
+      - staticcheck
+      - bodyclose
+      - dogsled
+      - gochecknoglobals
+      - gochecknoinits
+      - gocognit
+      - goconst
+      - gocritic
+      - gocyclo
+      - revive
+      - gosec
+      - govet
+      - misspell
+      - nakedret
+      - prealloc
+      - exportloopref
+      - unconvert
+      - unparam
+      - whitespace
+  # enable-all: true
+  # disable:
+  #   - exhaustivestruct
+  #   - forbidigo
+  #   - gochecknoinits
+  #   - gochecknoglobals
+  #   - gocognit
+  #   - gofmt
+  #   - gofumpt
+  #   - gomnd
+  #   - paralleltest
+  #   - wsl
+
+
+run:
+  deadline: 10m
+  skip-dirs:
+    - ./x
+    - ./tmp
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - revive
+        - wrapcheck
