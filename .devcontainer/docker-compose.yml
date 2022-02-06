@@ -2,8 +2,8 @@
 version: "3"
 services:
   workspace:
-    image: fjolsvim/dev-container-go-buildutils
-    container_name: go-buildutils-workspace
+    image: fjolsvin/vscode-golang-alpine
+    container_name: go-template-workspace
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../:/workspace:cached
