@@ -1,0 +1,12 @@
+.git-credentials
+**/.git-credentials
+.nvimlog
+*~
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+# vendor/
