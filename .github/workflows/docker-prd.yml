@@ -1,12 +1,12 @@
 ---
-name: "docker-vscode-devcontainer"
+name: "docker-prd"
 on:
   schedule:
     - cron: "0 0 * * *"
   push:
     paths:
-      - ".github/workflows/docker-vscode-devcontainer.yml"
-      - "contrib/docker/devcontainer/alpine/*"
+      - ".github/workflows/docker-prd.yml"
+      - "contrib/docker/prd/*"
   workflow_dispatch:
 jobs:
   alpine:
@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
@@ -29,6 +27,8 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: "build and push docker image"
         shell: bash
-        run: >
-          set -ex &&
-          bash contrib/docker/devcontainer/alpine/build.sh
+        run: |
+          set -ex ;
+          docker buildx use "go-template" \
+          || docker buildx create --use --name "go-template" --driver docker-container ;
+          docker buildx bake --builder go-template prd ;

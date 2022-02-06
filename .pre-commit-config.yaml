@@ -30,8 +30,14 @@ repos:
   hooks:
     - id: docker-compose-check
       name: "ensure validity of docker-compose files"
-    - id: hadolint
-      name: "ensure validity of docker files"
+    #  ────────────────────────────────────────────────────────────────────
+    # [ NOTE ] commented because we are using heredocs
+    # in docker files and hadolink does not support
+    # dockerfile 1.3 spec which includes support for
+    # heredocs
+    #  ────────────────────────────────────────────────────────────────────
+    # - id: hadolint
+    #   name: "ensure validity of docker files"
 - repo: local
   hooks:
   - id: go-fmt

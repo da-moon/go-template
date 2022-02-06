@@ -6,8 +6,8 @@ package main
 import (
 	"os"
 
-	build "github.com/da-moon/go-template/internal/mage/build"
-	test "github.com/da-moon/go-template/internal/mage/test"
+	compile "github.com/da-moon/go-template/build/mage/compile"
+	test "github.com/da-moon/go-template/build/mage/test"
 	primitives "github.com/da-moon/go-template/internal/primitives"
 	mg "github.com/magefile/mage/mg"
 	sh "github.com/magefile/mage/sh"
@@ -73,7 +73,7 @@ func Clean() error {
 }
 func Build() error {
 	mg.Deps(Clean, Deps)
-	return build.Target()
+	return compile.Target()
 }
 
 // Test will run all tests across all sub-directories once.

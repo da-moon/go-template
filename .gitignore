@@ -35,6 +35,8 @@
 !.revive.toml
 !.stignore
 !.versionrc
+!.pre-commit-config.yaml
+!.go-version
 !LICENSE
 !README.md
 !commitlint.config.js
@@ -45,5 +47,4 @@
 !magefile.go
 !Justfile
 !Makefile
-!.pre-commit-config.yaml
-!.go-version
+!docker-bake.hcl

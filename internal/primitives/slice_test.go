@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	primitives "github.com/da-moon/go-template/internal/primitives"
 	assert "github.com/stretchr/testify/assert"
-	primitives "gitlab.com/tmobile/relic/accelerators/relic-api/internal/primitives"
 )
 
 // TestMapString tests the MapString function
