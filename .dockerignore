@@ -1,0 +1,17 @@
+*
+**/*_test.go
+!.git
+!vars.mk
+!cmd
+!internal
+!pkg
+!api
+!sdk
+!physical
+!go.mod
+!go.sum
+!Justfile
+!Makefile
+!magefile.go
+!tools.go
+!.goreleaser.yml
