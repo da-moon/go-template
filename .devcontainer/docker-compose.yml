@@ -1,0 +1,15 @@
+---
+version: "3"
+services:
+  workspace:
+    image: fjolsvim/dev-container-go-buildutils
+    container_name: go-buildutils-workspace
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../:/workspace:cached
+    command:
+      - /bin/sh
+      - -cex
+      - |
+        sudo chown "`id -u`:`id -g`" $$WORKDIR -R ;
+        while sleep 1000; do :; done

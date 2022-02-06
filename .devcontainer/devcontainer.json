@@ -1,0 +1,95 @@
+{
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "workspace",
+  "shutdownAction": "stopCompose",
+  "workspaceFolder": "/workspace",
+  "settings": {
+    "files.eol": "\n",
+    "files.exclude": {
+      "**/.vagrant": true,
+      "**/.git": true
+    },
+    "[settings.json]": {
+      "editor.formatOnSave": false
+    },
+    "[devcontainer.json]": {
+      "editor.formatOnSave": false
+    },
+    "terminal.integrated.profiles.linux": {
+      "bash (login)": {
+        "path": "/bin/bash",
+        "args": [
+          "--login"
+        ]
+      }
+    },
+    "go.testFlags": [
+      "-v"
+    ],
+    "go.toolsManagement.checkForUpdates": "proxy",
+    "go.gopath": "/go",
+    "go.useLanguageServer": true,
+    "go.autocompleteUnimportedPackages": true,
+    "go.gotoSymbol.includeImports": true,
+    "go.gotoSymbol.includeGoroot": true,
+    "gopls": {
+      "completeUnimported": true,
+      "deepCompletion": true,
+      "usePlaceholders": false,
+      "staticcheck": true
+    },
+    "go.buildOnSave": "package",
+    "go.lintOnSave": "package",
+    "go.vetOnSave": "package",
+    "go.testOnSave": false,
+    "[go]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+      },
+      "editor.snippetSuggestions": "none"
+    },
+    "[go.mod]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+      }
+    },
+    "go.lintTool": "golangci-lint",
+    "go.lintFlags": [
+      "run",
+      "--config",
+      "${workspaceFolder}/.golangci.yml"
+    ]
+  },
+  "extensions": [
+	"redhat.vscode-yaml",
+	"streetsidesoftware.code-spell-checker",
+	"wayou.vscode-todo-highlight",
+	"yzhang.markdown-all-in-one",
+	"aaron-bond.better-comments",
+	"golang.Go",
+	"mutantdino.resourcemonitor",
+	"TabNine.tabnine-vscode",
+	"EditorConfig.EditorConfig",
+	"kevinkyang.auto-comment-blocks",
+	"ms-azuretools.vscode-docker",
+	"karyfoundation.comment",
+	"wmaurer.change-case",
+	"skellock.just",
+	"wholroyd.hcl",
+	"znck.grammarly",
+	"tabnine.tabnine-vscode",
+	"github.copilot",
+	"dracula-theme.theme-dracula",
+	"github.github-vscode-theme"
+],
+  "forwardPorts": [],
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "postCreateCommand": "uname -a && go version",
+  "remoteUser": "devel"
+}
