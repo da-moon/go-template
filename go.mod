@@ -3,6 +3,7 @@ module github.com/da-moon/go-template
 go 1.16
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.9.0
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/davidrjenni/reftools v0.0.0-20210213085015-40322ffdc2e4
 	github.com/fatih/color v1.12.0
@@ -12,12 +13,14 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golangci/golangci-lint v1.41.1
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/serf v0.9.5
 	github.com/josharian/impl v1.1.0
 	github.com/jstemmer/gotags v1.4.1
 	github.com/kisielk/errcheck v1.6.0
 	github.com/klauspost/asmfmt v1.3.1
 	github.com/koron/iferr v0.0.0-20180615142939-bb332a3b1d91
 	github.com/magefile/mage v1.11.0
+	github.com/mitchellh/cli v1.1.0
 	github.com/modern-go/reflect2 v1.0.1
 	github.com/palantir/stacktrace v0.0.0-20161112013806-78658fd2d177
 	github.com/rogpeppe/godef v1.1.2

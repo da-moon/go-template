@@ -7,6 +7,7 @@ set shell := ["/bin/bash", "-o", "pipefail", "-c"]
 
 project_name := `basename $PWD`
 docker_image := `/bin/grep '"image":' .devcontainer/devcontainer.json | /bin/sed -e 's/"image": //g' -e 's/"//g' -e 's/[[:space:],]*//g'`
+
 # ────────────────────────────────────────────────────────────────────
 default:
     @just --choose
