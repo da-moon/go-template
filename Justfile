@@ -1,214 +1,364 @@
 # !/usr/bin/env -S just --justfile
-# vi: ft=just tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
+# vim: filetype=just softtabstop=2 tabstop=2 shiftwidth=2 fenc=utf-8 fileformat=unix expandtab
+set positional-arguments := true
+set dotenv-load := true
+set shell := ["/bin/bash", "-o", "pipefail", "-c"]
+
+project_name := `basename $PWD`
+docker_image := `/bin/grep '"image":' .devcontainer/devcontainer.json | /bin/sed -e 's/"image": //g' -e 's/"//g' -e 's/[[:space:],]*//g'`
+#  ────────────────────────────────────────────────────────────────────
 default:
-  @just --choose
+    @just --choose
 # ─── DEPENDENCIES ───────────────────────────────────────────────────────────────
-alias sd := spacevim-dependencies
-spacevim-dependencies:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  sudo yarn global add --prefix /usr/local \
-    remark \
-    remark-cli \
-    remark-stringify \
-    remark-frontmatter \
-    wcwidth \
-    prettier \
-    bash-language-server \
-    dockerfile-language-server-nodejs ;
+
+alias b := bootstrap
+
+bootstrap: dependencies go-bootstrap vscode-tasks kary-comments format pre-commit
+    @echo bootstrap completed
+
 # ────────────────────────────────────────────────────────────────────────────────
-bootstrap:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  go env -w "GO111MODULE=on"
-  go env -w "CGO_ENABLED=0"
-  go env -w "CGO_LDFLAGS=-s -w -extldflags '-static'"
-  go clean -modcache
-  go mod tidy
-  go generate -tags tools tools.go
+
+alias d := dependencies
+
+dependencies:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=':' read -a paths <<< "$(printenv PATH)" ;
+    [[ ! " ${paths[@]} " =~ " ${HOME}/bin " ]] && export PATH="${PATH}:${HOME}/bin" || true ;
+    if command -- sudo pip3 -h > /dev/null 2>&1 ; then
+      if ! command -- pre-commit -h > /dev/null 2>&1 ; then
+        curl "https://pre-commit.com/install-local.py" | python3 -
+      fi
+      if ! command -- jq -h > /dev/null 2>&1 ; then
+        python3 -m pip install --user jq
+      fi
+    fi
+    if command -- cargo -h > /dev/null 2>&1 ; then
+      if ! command -- convco -h > /dev/null 2>&1 ; then
+        cargo install --locked --all-features --git https://github.com/convco/convco.git
+      fi
+      if ! command -- jsonfmt -h > /dev/null 2>&1 ; then
+        cargo install --locked --all-features -j `nproc` jsonfmt
+      fi
+    fi
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+alias gb := go-bootstrap
+
+go-bootstrap:
+    go env -w "GO111MODULE=on"
+    go env -w "CGO_ENABLED=0"
+    go env -w "CGO_LDFLAGS=-s -w -extldflags '-static'"
+    go clean -modcache
+    go mod tidy
+    go generate -tags tools tools.go
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+alias kc := kary-comments
+
+kary-comments:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sed -i.bak \
+    -e "/case 'yaml':.*/a case 'dockerfile':" \
+    -e "/case 'yaml':.*/a case 'just':" \
+    -e "/case 'yaml':.*/a case 'hcl':" \
+    ~/.vscode*/extensions/karyfoundation.comment*/dictionary.js > /dev/null 2>&1 || true
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+alias vt := vscode-tasks
+
+vscode-tasks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -- jq -h > /dev/null 2>&1 ; then
+      IFS=' ' read -a TASKS <<< "$(just --summary --color never -f "{{ justfile() }}" 2>/dev/null)"
+      if [ ${#TASKS[@]} -ne 0  ];then
+        mkdir -p "{{ justfile_directory() }}/.vscode"
+        json=$(jq -n --arg version "2.0.0" '{"version":$version,"tasks":[]}')
+        for task in "${TASKS[@]}";do
+          taskjson=$(jq -n --arg task "${task}" --arg command "just ${task}" '[{"type": "shell","label": $task,  "command": $command }]')
+          json=$(echo "${json}" | jq ".tasks += ${taskjson}")
+        done
+        echo "${json}" | jq -r '.' > "{{ justfile_directory() }}/.vscode/tasks.json"
+      fi
+    fi
+    just format-just
+
+# ─── FORMAT ─────────────────────────────────────────────────────────────────────
+
+alias f := format
+alias fmt := format
+
+format: format-json format-just format-go
+    @echo format completed
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+alias fj := format-json
+alias json-fmt := format-json
+
+format-json:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -- jsonfmt -h > /dev/null 2>&1 ; then
+      while read file;do
+        echo "*** formatting $file"
+        jsonfmt "$file" || true
+        echo '' >> "$file"
+      done < <(find -type f -not -path '*/\.git/*' -name '*.json')
+    fi
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+alias go-fmt := format-go
+alias gofmt := format-go
+alias fg := format-go
+
+format-go:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    gofmt -l -w {{ justfile_directory() }}
+
+# ────────────────────────────────────────────────────────────────────────────────
+format-just:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just --unstable --fmt 2>/dev/null
+
+# ─── GO ─────────────────────────────────────────────────────────────────────────
+build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mage build
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+lint: golangci-lint
+
+golangci-lint: format-go
+    #!/usr/bin/env bash
+    set -euox pipefail
+    golangci-lint run \
+    --print-issued-lines=false \
+    --exclude-use-default=false \
+    --config "{{ justfile_directory() }}/.golangci.yml"
+
 # ─── GIT ────────────────────────────────────────────────────────────────────────
 # Variables
-MASTER_BRANCH_NAME  := 'master'
-MAJOR_VERSION       := `convco version --major 2>/dev/null || echo '0.0.1'`
-MINOR_VERSION       := `convco version --minor 2>/dev/null || echo '0.0.1'`
-PATCH_VERSION       := `convco version --patch 2>/dev/null || echo '0.0.1'`
+
+MASTER_BRANCH_NAME := 'tmo/main'
+MAJOR_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --major 2>/dev/null || echo '0.0.1'`
+MINOR_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --minor 2>/dev/null || echo '0.0.1'`
+PATCH_VERSION := `[[ ! -z $(git tag -l | head -n 1 ) ]] && convco version --patch 2>/dev/null || echo '0.0.1'`
+
 # ────────────────────────────────────────────────────────────────────────────────
+
 alias pc := pre-commit
-pre-commit:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  pushd "{{justfile_directory()}}" > /dev/null 2>&1
-  export PIP_USER=false
-  git add ".pre-commit-config.yaml"
-  pre-commit install > /dev/null 2>&1
-  pre-commit install-hooks
-  pre-commit
-  popd > /dev/null 2>&1
+
+pre-commit: format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=':' read -a paths <<< "$(printenv PATH)" ;
+    [[ ! " ${paths[@]} " =~ " ${HOME}/bin " ]] && export PATH="${PATH}:${HOME}/bin" || true ;
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    if [ -r .pre-commit-config.yaml ]; then
+      git add ".pre-commit-config.yaml"
+      pre-commit install > /dev/null 2>&1
+      pre-commit install-hooks
+      pre-commit
+    fi
+    popd > /dev/null 2>&1
+
 # ────────────────────────────────────────────────────────────────────────────────
+
+alias gf := git-fetch
+
+git-fetch:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    git fetch -p ;
+    for branch in $(git branch -vv | grep ': gone]' | awk '{print $1}'); do
+      git branch -D "$branch";
+    done
+    popd > /dev/null 2>&1
+
+# ────────────────────────────────────────────────────────────────────────────────
+
 alias c := commit
-commit: pre-commit
-  #!/usr/bin/env bash
-  set -euo pipefail
-  pushd "{{justfile_directory()}}" > /dev/null 2>&1
-  if command -- convco -h > /dev/null 2>&1 ; then
-    convco commit
-  else
-    git commit
-  fi
-  popd > /dev/null 2>&1
+
+commit: pre-commit git-fetch
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    if command -- convco -h > /dev/null 2>&1 ; then
+      convco commit
+    else
+      git commit
+    fi
+    popd > /dev/null 2>&1
+
 # ────────────────────────────────────────────────────────────────────────────────
+
 alias mar := major-release
-major-release:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  pushd "{{justfile_directory()}}" > /dev/null 2>&1
-  git checkout "{{MASTER_BRANCH_NAME}}"
-  git pull
-  git tag -a "v{{MAJOR_VERSION}}" -m 'major release {{MAJOR_VERSION}}'
-  git push origin --tags
-  if command -- convco -h > /dev/null 2>&1 ; then
-    convco changelog > CHANGELOG.md
-    git add CHANGELOG.md
-    if command -- pre-commit -h > /dev/null 2>&1 ; then
-      pre-commit || true
+
+major-release: git-fetch format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=':' read -a paths <<< "$(printenv PATH)" ;
+    [[ ! " ${paths[@]} " =~ " ${HOME}/bin " ]] && export PATH="${PATH}:${HOME}/bin" || true;
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    git checkout "{{ MASTER_BRANCH_NAME }}"
+    git pull
+    git tag -a "v{{ MAJOR_VERSION }}" -m 'major release {{ MAJOR_VERSION }}'
+    git push origin --tags
+    if command -- convco -h > /dev/null 2>&1 ; then
+      convco changelog > CHANGELOG.md
       git add CHANGELOG.md
+      if command -- pre-commit -h > /dev/null 2>&1 ; then
+        pre-commit || true
+        git add CHANGELOG.md
+      fi
+      git commit -m 'docs(changelog): updated changelog for v{{ MAJOR_VERSION }}'
+      git push
     fi
-    git commit -m 'docs(changelog): updated changelog for v{{MAJOR_VERSION}}'
-    git push
-  fi
-  popd > /dev/null 2>&1
+    just git-fetch
+    popd > /dev/null 2>&1
+
 # ────────────────────────────────────────────────────────────────────────────────
+
 alias mir := minor-release
-minor-release:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  pushd "{{justfile_directory()}}" > /dev/null 2>&1
-  git checkout "{{MASTER_BRANCH_NAME}}"
-  git pull
-  git tag -a "v{{MINOR_VERSION}}" -m 'minor release {{MINOR_VERSION}}'
-  git push origin --tags
-  if command -- convco -h > /dev/null 2>&1 ; then
-    convco changelog > CHANGELOG.md
-    git add CHANGELOG.md
-    if command -- pre-commit -h > /dev/null 2>&1 ; then
-      pre-commit || true
+
+minor-release: git-fetch format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=':' read -a paths <<< "$(printenv PATH)" ;
+    [[ ! " ${paths[@]} " =~ " ${HOME}/bin " ]] && export PATH="${PATH}:${HOME}/bin" || true;
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    git checkout "{{ MASTER_BRANCH_NAME }}"
+    git pull
+    git tag -a "v{{ MINOR_VERSION }}" -m 'minor release {{ MINOR_VERSION }}'
+    git push origin --tags
+    if command -- convco -h > /dev/null 2>&1 ; then
+      convco changelog > CHANGELOG.md
       git add CHANGELOG.md
+      if command -- pre-commit -h > /dev/null 2>&1 ; then
+        pre-commit || true
+        git add CHANGELOG.md
+      fi
+      git commit -m 'docs(changelog): updated changelog for v{{ MINOR_VERSION }}'
+      git push
+      just git-fetch
     fi
-    git commit -m 'docs(changelog): updated changelog for v{{MINOR_VERSION}}'
-    git push
-  fi
-  popd > /dev/null 2>&1
+    popd > /dev/null 2>&1
+
 # ────────────────────────────────────────────────────────────────────────────────
+
 alias pr := patch-release
-patch-release:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  pushd "{{justfile_directory()}}" > /dev/null 2>&1
-  git checkout "{{MASTER_BRANCH_NAME}}"
-  git pull
-  git tag -a "v{{PATCH_VERSION}}" -m 'patch release {{PATCH_VERSION}}'
-  git push origin --tags
-  if command -- convco -h > /dev/null 2>&1 ; then
-    convco changelog > CHANGELOG.md
-    git add CHANGELOG.md
-    if command -- pre-commit -h > /dev/null 2>&1 ; then
-      pre-commit || true
+
+patch-release: git-fetch format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=':' read -a paths <<< "$(printenv PATH)" ;
+    [[ ! " ${paths[@]} " =~ " ${HOME}/bin " ]] && export PATH="${PATH}:${HOME}/bin" || true;
+    pushd "{{ justfile_directory() }}" > /dev/null 2>&1
+    git checkout "{{ MASTER_BRANCH_NAME }}"
+    git pull
+    git tag -a "v{{ PATCH_VERSION }}" -m 'patch release {{ PATCH_VERSION }}'
+    git push origin --tags
+    if command -- convco -h > /dev/null 2>&1 ; then
+      convco changelog > CHANGELOG.md
       git add CHANGELOG.md
+      if command -- pre-commit -h > /dev/null 2>&1 ; then
+        pre-commit || true
+        git add CHANGELOG.md
+      fi
+      git commit -m 'docs(changelog): updated changelog for v{{ MINOR_VERSION }}'
+      git push
     fi
-    git commit -m 'docs(changelog): updated changelog for v{{MINOR_VERSION}}'
-    git push
-  fi
-  popd > /dev/null 2>&1
+    just git-fetch
+    popd > /dev/null 2>&1
+
+alias gc := generate-changelog
+
+generate-changelog: format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    rm -rf "{{ justfile_directory() }}/tmp"
+    mkdir -p "{{ justfile_directory() }}/tmp"
+    convco changelog > "{{ justfile_directory() }}/tmp/$(basename {{ justfile_directory() }})-changelog-$(date -u +%Y-%m-%d).md"
+    if command -- pandoc -h >/dev/null 2>&1; then
+    pandoc \
+      --from markdown \
+      --pdf-engine=xelatex \
+      -o  "{{ justfile_directory() }}/tmp/$(basename {{ justfile_directory() }})-changelog-$(date -u +%Y-%m-%d).pdf" \
+      "{{ justfile_directory() }}/tmp/$(basename {{ justfile_directory() }})-changelog-$(date -u +%Y-%m-%d).md"
+    fi
+    if [ -d /workspace ]; then
+      cp -f "{{ justfile_directory() }}/tmp/$(basename {{ justfile_directory() }})-changelog-$(date -u +%Y-%m-%d).pdf" /workspace/
+      cp -f "{{ justfile_directory() }}/tmp/$(basename {{ justfile_directory() }})-changelog-$(date -u +%Y-%m-%d).md" /workspace/
+    fi
+
+snapshot: git-fetch format-just
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sync
+    snapshot_dir="{{ justfile_directory() }}/tmp/snapshots"
+    mkdir -p "${snapshot_dir}"
+    time="$(date +'%Y-%m-%d-%H-%M')"
+    path="${snapshot_dir}/${time}.tar.gz"
+    tmp="$(mktemp -d)"
+    tar -C {{ justfile_directory() }} -cpzf "$tmp/${time}.tar.gz" .
+    mv "$tmp/${time}.tar.gz" "$path"
+    rm -r "$tmp"
+    echo >&2 "*** snapshot created at ${path}"
+
 # ─── DEVCONTAINER SETUP ─────────────────────────────────────────────────────────
 alias dcp := dev-container-pull
 dev-container-pull:
   #!/usr/bin/env bash
-  set -euo pipefail
-  docker-compose -f "{{justfile_directory()}}/.devcontainer/docker-compose.yml" pull
+  set -xeuo pipefail
+  docker pull "{{ docker_image }}"
 # ────────────────────────────────────────────────────────────────────────────────
 alias dcc := dev-container-clean
 dev-container-clean:
   #!/usr/bin/env bash
-  set -euo pipefail
-  docker-compose -f "{{justfile_directory()}}/.devcontainer/docker-compose.yml" down -v --remove-orphans
-  docker rm -f "$(docker ps -aq)"
-  docker system prune -f -a --volumes
+  set -xeuo pipefail
+  docker rm -f "{{ project_name }}" > /dev/null 2>&1 || true
 # ────────────────────────────────────────────────────────────────────────────────
 alias dcu := dev-container-up
 dev-container-up: dev-container-pull dev-container-clean
   #!/usr/bin/env bash
-  set -euo pipefail
-  docker-compose -f "{{justfile_directory()}}/.devcontainer/docker-compose.yml" up -d
+  set -xeuo pipefail
+  if [ ! "$(docker ps -q -f name="{{ project_name}}")" ]; then
+    # [ NOTE ] => this code path is just for safety purposes
+    # it is probably never going to run.
+    if [ "$(docker ps -aq -f status=exited -f name="{{ project_name}}")" ]; then
+      docker rm "{{ project_name }}"
+    fi
+    docker run \
+      --detach \
+      --tty \
+      --name "{{ project_name }}" \
+      --volume "{{ justfile_directory() }}:/workspace" \
+      --workdir "/workspace" \
+      --network "host" \
+      --user "$(id -u):$(id -g)" \
+      --cap-add SYS_PTRACE \
+      --security-opt seccomp=unconfined \
+      "{{ docker_image }}";
+      sleep 5 ;
+  fi
 # ────────────────────────────────────────────────────────────────────────────────
 alias dce := dev-container-exec
 dev-container-exec: dev-container-up
   #!/usr/bin/env bash
-  set -euo pipefail
-  docker-compose -f .devcontainer/docker-compose.yml exec workspace /bin/bash
-# ─── VAGRANT RELATED TARGETS ────────────────────────────────────────────────────
-alias vug := vagrant-up-gcloud
-vagrant-up-gcloud:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  export NAME="$(basename "{{justfile_directory()}}")" ;
-  plugins=(
-    "vagrant-share"
-    "vagrant-google"
-    "vagrant-rsync-back"
-  );
-  available_plugins=($(vagrant plugin list | awk '{print $1}'))
-  intersection=($(comm -12 <(for X in "${plugins[@]}"; do echo "${X}"; done|sort)  <(for X in "${available_plugins[@]}"; do echo "${X}"; done|sort)))
-  to_install=($(echo ${intersection[*]} ${plugins[*]} | sed 's/ /\n/g' | sort -n | uniq -u | paste -sd " " - ))
-  if [ ${#to_install[@]} -ne 0  ];then
-    vagrant plugin install ${to_install[@]}
-  fi
-  if [ -z ${GOOGLE_PROJECT_ID+x} ] || [ -z ${GOOGLE_PROJECT_ID} ]; then
-    export GOOGLE_PROJECT_ID="$(gcloud config get-value core/project)" ;
-  fi
-  GCLOUD_IAM_ACCOUNT="${NAME}@${GOOGLE_PROJECT_ID}.iam.gserviceaccount.com"
-  if ! gcloud iam service-accounts describe "${GCLOUD_IAM_ACCOUNT}" > /dev/null 2>&1; then
-    gcloud iam service-accounts create "${NAME}" ;
-    gcloud projects add-iam-policy-binding "${GOOGLE_PROJECT_ID}" \
-      --member="serviceAccount:${GCLOUD_IAM_ACCOUNT}" \
-      --role="roles/owner" ;
-  fi
-    if [ -z ${GOOGLE_APPLICATION_CREDENTIALS+x} ] || [ -z ${GOOGLE_APPLICATION_CREDENTIALS} ]; then
-    export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/${NAME}_gcloud.json" ;
-  fi
-  if [ -r "${GOOGLE_APPLICATION_CREDENTIALS}" ];then
-    rm ${GOOGLE_APPLICATION_CREDENTIALS}
-  fi
-  gcloud iam service-accounts keys list \
-    --iam-account="${GCLOUD_IAM_ACCOUNT}" \
-    --format="value(KEY_ID)" | xargs -I {} \
-    gcloud iam service-accounts keys delete \
-    --iam-account="${GCLOUD_IAM_ACCOUNT}" {} >/dev/null 2>&1 || true ;
-  gcloud iam service-accounts keys \
-    create ${GOOGLE_APPLICATION_CREDENTIALS} \
-    --iam-account="${GCLOUD_IAM_ACCOUNT}" ;
-  rm -f "$HOME/.ssh/${NAME}"* ;
-  ssh-keygen -q -N "" -t rsa -b 2048 -f "$HOME/.ssh/${NAME}" || true ;
-  vagrant up --provider=google
-# ────────────────────────────────────────────────────────────────────────────────
-alias vdg := vagrant-down-gcloud
-vagrant-down-gcloud:
-  #!/usr/bin/env bash
-  set -euo pipefail ;
-  vagrant destroy -f || true ;
-  export NAME="$(basename "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")" ;
-  if [ -z ${GOOGLE_PROJECT_ID+x} ] || [ -z ${GOOGLE_PROJECT_ID} ]; then
-  export GOOGLE_PROJECT_ID="$(gcloud config get-value core/project)" ;
-  fi
-  if [ -z ${GOOGLE_APPLICATION_CREDENTIALS+x} ] || [ -z ${GOOGLE_APPLICATION_CREDENTIALS} ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/${NAME}_gcloud.json" ;
-  fi
-  GCLOUD_IAM_ACCOUNT="${NAME}@${GOOGLE_PROJECT_ID}.iam.gserviceaccount.com"
-  gcloud iam service-accounts delete --quiet "${GCLOUD_IAM_ACCOUNT}" > /dev/null 2>&1  || true ;
-  rm -f "${GOOGLE_APPLICATION_CREDENTIALS}" ;
-  rm -f "$HOME/.ssh/${NAME}" ;
-  rm -f "$HOME/.ssh/${NAME}.pub" ;
-  gcloud compute instances delete --quiet "${NAME}" > /dev/null 2>&1 || true ;
-  sudo rm -rf .vagrant ;
+  set -xeuo pipefail
+  docker exec --interactive --tty "{{ project_name }}" /bin/bash
 # ─── GITPOD RELATED TARGET ──────────────────────────────────────────────────────
 docker-socket-chown:
   #!/usr/bin/env bash
